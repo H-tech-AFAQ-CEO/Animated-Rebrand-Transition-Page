@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fluid Networks - Transitioning to Complete IT</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            overflow-x: hidden;
+            position: relative;
+            min-height: 100vh;
+            background: #0a0a0a;
+        }
+
+        #particles-js {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            z-index: 10000;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 2s ease;
+        }
+
+        #particles-js.active {
+            opacity: 1;
+        }
+
+        .fluid-site {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1;
+            transition: filter 12s cubic-bezier(0.23, 1, 0.32, 1), opacity 12s cubic-bezier(0.23, 1, 0.32, 1), transform 12s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .fluid-site.blur {
+            filter: blur(40px) brightness(0.4) saturate(0.8);
+            opacity: 0;
+            transform: scale(1.05);
+        }
+
+        .complete-site {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            opacity: 0;
+            z-index: 0;
+            transform: scale(0.95);
+            filter: blur(15px) saturate(1.2);
+            transition: opacity 12s cubic-bezier(0.23, 1, 0.32, 1), transform 12s cubic-bezier(0.23, 1, 0.32, 1), filter 12s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .complete-site.show {
+            opacity: 1;
+            z-index: 2;
+            transform: scale(1);
+            filter: blur(0px);
+        }
+
+        .overlay-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(30px) saturate(1.8);
+            color: white;
+            padding: 48px 72px;
+            font-size: 38px;
+            font-weight: 700;
+            z-index: 10001;
+            border-radius: 32px;
+            text-align: center;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            animation: popIn 1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards, subtlePulse 3s ease-in-out 1s infinite, fadeOut 2.5s ease 10s forwards;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            letter-spacing: -0.5px;
+            line-height: 1.4;
+            text-shadow: 0 1px 30px rgba(0, 212, 255, 0.3);
+            max-width: 85vw;
+        }
+
+        .overlay-message::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.05) 0%, rgba(0, 102, 204, 0.05) 100%);
+            border-radius: 32px;
+            z-index: -1;
+        }
+
+        @keyframes popIn {
+            0% {
+                transform: translate(-50%, -50%) scale(0.8) rotate(-2deg);
+                opacity: 0;
+                filter: blur(10px);
+            }
+
+            50% {
+                transform: translate(-50%, -50%) scale(1.02) rotate(0.5deg);
+                opacity: 0.8;
+            }
+
+            100% {
+                transform: translate(-50%, -50%) scale(1) rotate(0deg);
+                opacity: 1;
+                filter: blur(0px);
+            }
+        }
+
+        @keyframes gradientShift {
+
+            0%,
+            100% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+        }
+
+        @keyframes subtlePulse {
+
+            0%,
+            100% {
+                box-shadow: 0 25px 80px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 0 60px rgba(0, 212, 255, 0.1);
+                transform: translate(-50%, -50%) scale(1);
+            }
+
+            50% {
+                box-shadow: 0 30px 90px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 0 80px rgba(0, 212, 255, 0.2);
+                transform: translate(-50%, -50%) scale(1.01);
+            }
+        }
+
+        @keyframes fadeOut {
+            0% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.7) translateY(-50px);
+                visibility: hidden;
+            }
+        }
+
+        .fluid-header {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px) saturate(1.8);
+            padding: 24px 0;
+            box-shadow: 0 1px 0 rgba(0, 0, 0, 0.05), 0 4px 24px rgba(0, 0, 0, 0.04);
+            position: relative;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+        }
+
+        .fluid-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(0, 102, 204, 0.3), transparent);
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: -200% 0;
+            }
+
+            100% {
+                background-position: 200% 0;
+            }
+        }
+
+        .fluid-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .fluid-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .fluid-logo img {
+            height: 65px;
+            filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.1));
+            transition: transform 0.3s ease;
+        }
+
+        .fluid-logo img:hover {
+            transform: scale(1.05);
+        }
+
+        .fluid-menu {
+            display: flex;
+            list-style: none;
+            gap: 35px;
+        }
+
+        .fluid-menu a {
+            color: #333;
+            text-decoration: none;
+            font-size: 15px;
+            font-weight: 600;
+            position: relative;
+            transition: color 0.3s ease;
+        }
+
+        .fluid-menu a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: #0066cc;
+            transition: width 0.3s ease;
+        }
+
+        .fluid-menu a:hover {
+            color: #0066cc;
+        }
+
+        .fluid-menu a:hover::after {
+            width: 100%;
+        }
+
+        .fluid-hero {
+            background: linear-gradient(135deg, #0066cc 0%, #004d99 50%, #003d7a 100%);
+            color: white;
+            padding: 140px 0;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .fluid-hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: moveGrid 20s linear infinite;
+            opacity: 0.3;
+        }
+
+        @keyframes moveGrid {
+            0% {
+                transform: translate(0, 0);
+            }
+
+            100% {
+                transform: translate(50px, 50px);
+            }
+        }
+
+        .fluid-hero-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .fluid-hero h1 {
+            font-size: 52px;
+            margin-bottom: 25px;
+            font-weight: 800;
+            text-shadow: 0 2px 30px rgba(0,0,0,0.2);
+            animation: slideInUp 0.8s ease-out;
+            letter-spacing: -1px;
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fluid-hero p {
+            font-size: 22px;
+            margin-bottom: 35px;
+            animation: slideInUp 0.8s ease-out 0.2s backwards;
+        }
+
+        .fluid-btn {
+            background: linear-gradient(135deg, #ff6600 0%, #ff8c00 100%);
+            color: white;
+            padding: 18px 45px;
+            border: none;
+            border-radius: 50px;
+            font-size: 17px;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            box-shadow: 0 8px 25px rgba(255, 102, 0, 0.4);
+            transition: all 0.3s ease;
+            animation: slideInUp 0.8s ease-out 0.4s backwards;
+        }
+
+        .fluid-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(255, 102, 0, 0.5);
+        }
+
+        .fluid-services {
+            padding: 100px 0;
+            background: linear-gradient(to bottom, #f8f8f8 0%, #ffffff 100%);
+        }
+
+        .fluid-services h2 {
+            text-align: center;
+            font-size: 42px;
+            margin-bottom: 60px;
+            color: #1a1a1a;
+            font-weight: 900;
+            position: relative;
+            display: inline-block;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .fluid-services h2::after {
+            content: '';
+            position: absolute;
+            bottom: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 4px;
+            background: linear-gradient(90deg, #0066cc, #00d4ff);
+            border-radius: 2px;
+        }
+
+        .fluid-service-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 35px;
+        }
+
+        .fluid-service-card {
+            background: white;
+            padding: 48px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04);
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+            border: 1px solid rgba(0,0,0,0.02);
+        }
+
+        .fluid-service-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 12px 40px rgba(0,102,204,0.12), 0 0 0 1px rgba(0,102,204,0.1);
+            background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
+        }
+
+        .fluid-service-card h3 {
+            color: #0066cc;
+            margin-bottom: 20px;
+            font-size: 24px;
+            font-weight: 800;
+        }
+
+        .fluid-service-card p {
+            color: #666;
+            line-height: 1.7;
+            font-size: 15px;
+        }
+
+        .complete-header {
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(30px) saturate(1.8);
+            padding: 24px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 1px 0 rgba(255, 255, 255, 0.05), 0 8px 32px rgba(0, 0, 0, 0.4);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .complete-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .complete-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .complete-logo img {
+            height: 48px;
+            filter: drop-shadow(0 0 20px rgba(0, 212, 255, 0.3));
+            transition: all 0.3s ease;
+        }
+
+        .complete-logo img:hover {
+            filter: drop-shadow(0 0 30px rgba(0, 212, 255, 0.5));
+            transform: scale(1.05);
+        }
+
+        .complete-menu {
+            display: flex;
+            list-style: none;
+            gap: 40px;
+        }
+
+        .complete-menu a {
+            color: #ffffff;
+            text-decoration: none;
+            font-size: 15px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .complete-menu a::before {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #00d4ff, #0066cc);
+            transition: width 0.3s ease;
+        }
+
+        .complete-menu a:hover {
+            color: #00d4ff;
+        }
+
+        .complete-menu a:hover::before {
+            width: 100%;
+        }
+
+        .complete-hero {
+            background: radial-gradient(ellipse at center, #0f0f0f 0%, #0a0a0a 40%, #000000 100%);
+            color: white;
+            padding: 200px 0;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .complete-hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                radial-gradient(circle at 20% 50%, rgba(0, 212, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 50%, rgba(0, 102, 204, 0.1) 0%, transparent 50%);
+            animation: pulse 8s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 0.5;
+            }
+
+            50% {
+                opacity: 1;
+            }
+        }
+
+        .complete-hero::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="none"/><path d="M50 0 L50 100 M0 50 L100 50" stroke="%2300d4ff" stroke-width="0.5" opacity="0.1"/></svg>');
+            opacity: 0.3;
+        }
+
+        .complete-hero-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .complete-hero h1 {
+            font-size: 60px;
+            margin-bottom: 30px;
+            font-weight: 800;
+            line-height: 1.1;
+            background: linear-gradient(135deg, #ffffff 0%, #00d4ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 60px rgba(0, 212, 255, 0.4);
+            animation: glow 3s ease-in-out infinite alternate;
+            letter-spacing: -1px;
+        }
+
+        @keyframes glow {
+            from {
+                filter: drop-shadow(0 0 20px rgba(0, 212, 255, 0.5));
+            }
+
+            to {
+                filter: drop-shadow(0 0 40px rgba(0, 212, 255, 0.8));
+            }
+        }
+
+        .complete-hero p {
+            font-size: 26px;
+            margin-bottom: 45px;
+            color: #b8b8b8;
+            font-weight: 300;
+            letter-spacing: 0.5px;
+        }
+
+        .complete-btn {
+            background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+            color: #000;
+            padding: 20px 50px;
+            border: none;
+            border-radius: 50px;
+            font-size: 17px;
+            font-weight: 800;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 10px 40px rgba(0, 212, 255, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .complete-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .complete-btn:hover::before {
+            left: 100%;
+        }
+
+        .complete-btn:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 15px 50px rgba(0, 212, 255, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+        }
+
+        .complete-features {
+            padding: 120px 0;
+            background: linear-gradient(to bottom, #ffffff 0%, #f5f5f5 100%);
+            position: relative;
+        }
+
+        .complete-features::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #00d4ff, transparent);
+        }
+
+        .complete-features h2 {
+            text-align: center;
+            font-size: 48px;
+            margin-bottom: 70px;
+            color: #0a0a0a;
+            font-weight: 900;
+            position: relative;
+            display: inline-block;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .complete-features h2::after {
+            content: '';
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 5px;
+            background: linear-gradient(90deg, #00d4ff, #0066cc);
+            border-radius: 3px;
+            box-shadow: 0 2px 15px rgba(0, 212, 255, 0.4);
+        }
+
+        .complete-feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+        }
+
+        .complete-feature-card {
+            padding: 48px;
+            border-radius: 24px;
+            background: white;
+            transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+            border: 1px solid rgba(0,0,0,0.04);
+            box-shadow: 0 2px 20px rgba(0,0,0,0.04), 0 0 0 1px rgba(255,255,255,0.8);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .complete-feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, #00d4ff, #0066cc);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.5s ease;
+        }
+
+        .complete-feature-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .complete-feature-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 20px 50px rgba(0, 212, 255, 0.12), 0 0 0 1px rgba(0, 212, 255, 0.2);
+            background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
+        }
+
+        .complete-feature-card h3 {
+            color: #0a0a0a;
+            margin-bottom: 20px;
+            font-size: 26px;
+            font-weight: 800;
+        }
+
+        .complete-feature-card:hover h3 {
+            color: #0066cc;
+        }
+
+        .complete-feature-card p {
+            color: #555;
+            line-height: 1.8;
+            font-size: 15px;
+            font-weight: 400;
+        }
+
+        .progress-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            height: 3px;
+            background: linear-gradient(90deg, rgba(0, 212, 255, 0.8), rgba(0, 102, 204, 0.9), rgba(0, 212, 255, 0.8));
+            background-size: 200% 100%;
+            width: 0%;
+            z-index: 10002;
+            transition: width 12s cubic-bezier(0.23, 1, 0.32, 1);
+            animation: shimmer 3s ease-in-out infinite;
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.4);
+        }
+
+        .progress-bar.active {
+            width: 100%;
+        }
+
+        @media (max-width: 768px) {
+
+            .fluid-menu,
+            .complete-menu {
+                display: none;
+            }
+
+            .fluid-hero h1 {
+                font-size: 36px;
+            }
+
+            .complete-hero h1 {
+                font-size: 38px;
+            }
+
+            .overlay-message {
+                font-size: 26px;
+                padding: 40px 50px;
+            }
+
+            .fluid-services h2,
+            .complete-features h2 {
+                font-size: 32px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="particles-js"></div>
+    <div class="progress-bar" id="progressBar"></div>
+    <div class="overlay-message">Fluid Networks is becoming your Complete IT provider!</div>
+    <div class="fluid-site" id="fluidSite">
+        <header class="fluid-header">
+            <div class="fluid-container">
+                <nav class="fluid-nav">
+                    <div class="fluid-logo">
+                        <img src="https://pronto-core-cdn.prontomarketing.com/2/wp-content/uploads/sites/2115/2017/02/logo-fluid-networks.png"
+                            alt="Fluid Networks">
+                    </div>
+                    <ul class="fluid-menu">
+                        <li><a href="#">Home</a></li>
+                        <li><a href="#">About Us</a></li>
+                        <li><a href="#">Services & Solutions</a></li>
+                        <li><a href="#">Cloud Enabled Office</a></li>
+                        <li><a href="#">Contact Us</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </header>
+        <section class="fluid-hero">
+            <div class="fluid-hero-content">
+                <div class="fluid-container">
+                    <h1>Your business needs a C.E.O.</h1>
+                    <p>Cloud Enabled Office™ is our fully-integrated cloud technology solution</p>
+                    <a href="#" class="fluid-btn">Go to the Cloud</a>
+                </div>
+            </div>
+        </section>
+        <section class="fluid-services">
+            <div class="fluid-container">
+                <h2>Fluid Networks solves problems through IT</h2>
+                <div class="fluid-service-grid">
+                    <div class="fluid-service-card">
+                        <h3>Managed IT Services</h3>
+                        <p>24/7 proactive monitoring of your servers, software systems, and security.</p>
+                    </div>
+                    <div class="fluid-service-card">
+                        <h3>Cyber Security</h3>
+                        <p>Cutting-edge detection tools to keep your company safe at all entry points.</p>
+                    </div>
+                    <div class="fluid-service-card">
+                        <h3>Data Backups</h3>
+                        <p>Redundancy is the key to ensuring your precious data is always available.</p>
+                    </div>
+                    <div class="fluid-service-card">
+                        <h3>Business Communications</h3>
+                        <p>Simplified options for broadband, dial-tone, and WAN communications.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+    <div class="complete-site" id="completeSite">
+        <header class="complete-header">
+            <div class="complete-container">
+                <nav class="complete-nav">
+                    <div class="complete-logo">
+                        <img src="https://cdn.prod.website-files.com/6814dc1cd67c2312761bb61a/6821b6b5d13b0922f75dbc48_logo.svg"
+                            alt="Complete IT Evolved">
+                    </div>
+                    <ul class="complete-menu">
+                        <li><a href="#">Services</a></li>
+                        <li><a href="#">Industries</a></li>
+                        <li><a href="#">Resources</a></li>
+                        <li><a href="#">Company</a></li>
+                        <li><a href="#">Contact Us</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </header>
+        <section class="complete-hero">
+            <div class="complete-hero-content">
+                <div class="complete-container">
+                    <h1>Trusted Technology,<br>Proven Partnership.</h1>
+                    <p>Seamless. Secure. Scaled. Bridge technology with business ambitions.</p>
+                    <a href="#" class="complete-btn">Book a Meeting</a>
+                </div>
+            </div>
+        </section>
+        <section class="complete-features">
+            <div class="complete-container">
+                <h2>Leading Solutions that Power Progress</h2>
+                <div class="complete-feature-grid">
+                    <div class="complete-feature-card">
+                        <h3>Managed IT</h3>
+                        <p>Fully managed and co-managed solutions designed to remove technology obstacles, allowing you
+                            to concentrate on growing your business.</p>
+                    </div>
+                    <div class="complete-feature-card">
+                        <h3>Cybersecurity</h3>
+                        <p>Prevent costly data breaches and minimize cyber risk with proactive security services that
+                            enhance your security posture.</p>
+                    </div>
+                    <div class="complete-feature-card">
+                        <h3>Compliance</h3>
+                        <p>Keep up with changing regulations and stay compliant with expert guidance for CMMC, HIPAA,
+                            and FFIEC standards.</p>
+                    </div>
+                    <div class="complete-feature-card">
+                        <h3>Data & Analytics</h3>
+                        <p>It's your data. Use it to move your business forward with advanced analytics and artificial
+                            intelligence.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+    <script>
+        setTimeout(function () {
+            document.getElementById('progressBar').classList.add('active');
+            particlesJS('particles-js', {
+                particles: {
+                    number: { value: 80, density: { enable: true, value_area: 800 } },
+                    color: { value: '#00d4ff' },
+                    shape: { type: 'circle' },
+                    opacity: { value: 0.5, random: true },
+                    size: { value: 3, random: true },
+                    line_linked: {
+                        enable: true,
+                        distance: 150,
+                        color: '#00d4ff',
+                        opacity: 0.4,
+                        width: 1
+                    },
+                    move: {
+                        enable: true,
+                        speed: 2,
+                        direction: 'none',
+                        random: true,
+                        out_mode: 'out'
+                    }
+                },
+                interactivity: {
+                    detect_on: 'canvas',
+                    events: {
+                        onhover: { enable: true, mode: 'repulse' },
+                        resize: true
+                    }
+                }
+            });
+            document.getElementById('particles-js').classList.add('active');
+        }, 3000);
+        setTimeout(function () {
+            document.getElementById('fluidSite').classList.add('blur');
+            document.getElementById('completeSite').classList.add('show');
+        }, 2500);
+        setTimeout(function () {
+            window.location.href = 'https://complete.net';
+        }, 12500);
+    </script>
+</body>
+
+</html>
